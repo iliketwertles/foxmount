@@ -9,7 +9,7 @@ use sys_mount::{
     Unmount,
     UnmountFlags
 };
-
+// test comment for commit
 fn recovery() {
     let recovery_dir = "/sysroot/.recovery";
     let roots_dir = "/sysroot/roots/.recovery";
