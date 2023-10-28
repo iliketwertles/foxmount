@@ -1,5 +1,5 @@
 [package]
-name = "foxmount-rs"
+name = "foxmount"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,8 @@ edition = "2021"
 [dependencies]
 sys-mount = "2.1.0"
 sysinfo = "0.29.10"
+
+
+[patch.crates-io.loopdev]
+git = "https://github.com/mulkieran/loopdev"
+branch = "bump-bindgen-reduce-version"
