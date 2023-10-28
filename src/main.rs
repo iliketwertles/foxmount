@@ -14,13 +14,20 @@ fn foxsnapshot_revert() {
     //this is to reduce repetition, can probably be done away with in the future
     println!("foxmount: Checking for foxsnapshot revert");
     if Path::new("/sysroot/roots/.revert").exists() {
+        let revert = fs::read_to_string("/sysroot/roots/.revert").expect("Unable to read .revert");
         Command::new("btrfs")
             .arg("subvolume")
             .arg("delete")
             .arg("/sysroot/overlay/usr")
             .spawn()
             .expect("foxmount: Failed to delete subvolume");
-
+        Command::new("btrfs")
+            .arg("subvolume")
+            .arg("snapshot")
+            .arg(format!("/sysroot/roots/.foxsnapshot/{}", revert.trim()))
+            .arg("/sysroot/overlay/usr")
+            .spawn()
+            .expect("foxmount: Failed to snapshot subvolume");
 
         fs::remove_file("/sysroot/roots/.revert").expect("foxmount: Failed to remove .revert");
     }
@@ -30,12 +37,18 @@ fn recovery() {
     let recovery_dir = "/sysroot/.recovery";
     let roots_dir = "/sysroot/roots/.recovery";
     println!("foxmount:  Unmounting overlays");
-    sys_mount::unmount("/sysroot/usr", UnmountFlags::DETACH)
-        .expect("unable to unmount /usr");
-    sys_mount::unmount("/sysroot/etc", UnmountFlags::DETACH)
-        .expect("unable to unmount /etc");
-    sys_mount::unmount("/sysroot/var", UnmountFlags::DETACH)
-        .expect("unable to unmount /var");
+    match sys_mount::unmount("/sysroot/usr", UnmountFlags::DETACH) {
+        Ok(_) => {},
+        Err(_) => {}
+    }
+    match sys_mount::unmount("/sysroot/etc", UnmountFlags::DETACH) {
+        Ok(_) => {},
+        Err(_) => {}
+    }
+    match sys_mount::unmount("/sysroot/var", UnmountFlags::DETACH) {
+        Ok(_) => {},
+        Err(_) => {}
+    }
 
     println!("foxmount: Mounting recovery");
     match fs::create_dir("/sysroot/roots/.recovery") {
@@ -99,10 +112,8 @@ fn foxmount(roots: PathBuf, xenia: PathBuf) {
     let overlay = fs::canonicalize("/dev/disk/by-label/OVERLAY");
     match overlay {
         Ok(_) => {}
-        Err(e) => {
-            println!("foxmount: FATAL: could not find overlays! --> {e}");
-            recovery();
-            exit(1);
+        Err(ref e) => {
+            println!("foxmount: Could not find overlays! --> {e}");
         }
     }
     let overlay = overlay.unwrap();
